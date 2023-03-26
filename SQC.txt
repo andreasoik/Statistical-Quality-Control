@@ -1,0 +1,522 @@
+#Xbar-R chart 
+
+#check the normality
+{
+library(ggplot2)
+library(hrbrthemes)
+library(tidyverse)
+p=ggplot(data=a,aes(x=X))+
+  geom_histogram(aes(y=..density..),bins=20,fill="slateblue1",col="#ececef",alpha=0.9)+
+  theme_classic()
+df<-with(a,data.frame(x=X,y=dnorm(X,mean(X),sd(X))))
+p+geom_line(data=df,aes(x=x,y=y),color="indianred1",lwd=1.5)#ιστογραμμα
+}
+{
+library(qqplotr)
+ggplot(data=a,aes(sample=X))+
+  stat_qq_band(bandType="ks",fill="#8DA0CB",alpha=0.6,distribution="norm")+
+  stat_qq_line(colour="#8DA0CB")+
+  stat_qq_point()+
+  theme_classic()+
+  xlab("Theoretical Quantiles")+
+  ylab("Sample Quantiles")
+}
+
+
+# R chart
+{
+D3=0 ; D4=2.114 #size=5
+A2=0.577
+  
+Range<-function(x){
+  max(x)-min(x)
+}
+
+par(mfrow=c(2,1))
+  xbarbysample=c(tapply(a$X,a$size,mean))
+  a$xbar_by_sample=round( rep(xbarbysample,each=5), 2)#εισάγουμε νέα σλη με το ευρος καθε δειγματος
+#όρια ελέγχου
+
+RL=round(D3*mean(c(tapply(a$X,a$size,Range))),2)
+RC=round(mean(c(tapply(a$X,a$size,Range))),2)
+RU= round(D4*mean(c(tapply(a$X,a$size,Range))),2)
+  
+XU=round( mean(xbarbysample) + A2*RC, 2)
+XC= round(mean(xbarbysample),2)
+XL=round(mean(xbarbysample) - A2*RC , 2)
+
+plot(a$size,a$xbar_by_sample,type="o",pch=16, col="blue",
+     xlab="Sample",ylab ="Sample Mean",xaxt="n",main="X-bar chart ",
+     ylim = c(min(a$xbar_by_sample)-1,max(a$xbar_by_sample)+1))
+axis(side=1,at=seq(1,dim(a)[1]/5,5))
+
+abline(h=XU,col="red",lwd=2)
+abline(h=XC,col="green",lwd=2)
+abline(h=XL,col="red",lwd=2)
+
+if( min(a$xbar_by_sample)<XL ){
+  q=mean(a[which(a$xbar_by_sample==min(a$xbar_by_sample)),][[1]] )
+  points(q,min(a$xbar_by_sample),col="red",type="o",pch=16)
+}else if(max(a$xbar_by_sample)>XU ){
+ 
+  points(c(unique(a[a$xbar_by_sample>XU,][[1]])), c(unique(a[a$xbar_by_sample>XU,][[3]]) ),
+         col="red",pch=16)
+}
+
+
+rangebysample=c(round(tapply(a$X,a$size,Range),2)) #το εύρος για καθε δείγμα
+a$range_by_sample=rep(rangebysample,each=5) #το ενσωματώνουμε στον πίνακα
+
+plot(a$size,a$range_by_sample,pch=16,col="blue",type="o",xlab="Sample",
+      ylab="Sample Range",main="R chart", ylim = c(0,max(a$range_by_sample)+1),xaxt="n")
+  axis( side=1,at=(seq(1, dim(a)[1]/5, 5)) )  
+
+  abline(h=RL,col="red",lwd=2)
+  abline(h=RC,col="green",lwd=2)
+  abline(h=RU,col="red",lwd=2)
+  
+if(max(a$range_by_sample)>RU){
+ 
+  points(c(unique(a[a$range_by_sample>RU,][[1]])), c(unique(a[a$range_by_sample>RU,][[4]]) ),
+         col="red",pch=16)
+  }
+}
+print(c(XU,XC,XL))
+print(c(RU,RC,RL))
+
+#Phase I
+
+{A2=0.577
+  xbarbysample=c(tapply(a$X,a$size,mean))
+  a$xbar_by_sample=round( rep(xbarbysample,each=5), 2)#εισάγουμε νέα σλη με το ευρος καθε δειγματος
+
+while(max(a$range_by_sample)>RU |min(a$xbar_by_sample)<XL | max(a$xbar_by_sample)>XU){
+  if(max(a$range_by_sample)>RU){
+  a=a[!a$range_by_sample==max(a$range_by_sample),]
+
+  }else if(max(a$xbar_by_sample)>XU & (max(a$xbar_by_sample)-XU) > XL-min(a$xbar_by_sample)){
+    a=a[!a$xbar_by_sample==max(a$xbar_by_sample),]
+  }else if(min(a$xbar_by_sample)<XL){
+    a=a[!a$xbar_by_sample==min(a$xbar_by_sample),]}
+
+rownames(a)<-NULL
+  #Χbar chart
+
+  RL=round(D3*mean(c(tapply(a$X,a$size,Range))),2)
+  RC=round(mean(c(tapply(a$X,a$size,Range))),2)
+  RU= round(D4*mean(c(tapply(a$X,a$size,Range))),2)
+  
+    xbarbysample=c(tapply(a$X,a$size,mean))
+    XU=round( mean(xbarbysample) + A2*RC, 2)
+    XC= round(mean(xbarbysample),2)
+    XL=round(mean(xbarbysample) - A2*RC , 2)
+    sample=rep(seq(1,(dim(a)[1])/5),each=5)
+   
+  }
+
+#############################################  
+#Phase ΙΙ
+############################################  
+  par(mfrow=c(2,1))
+  
+  XU=round( mean(xbarbysample) + A2*RC, 2)
+  XC= round(mean(xbarbysample),2)
+  XL=round(mean(xbarbysample) - A2*RC , 2)
+  
+  plot(sample,a$xbar_by_sample,type="o",pch=16, col="blue",
+       xlab="Sample",ylab ="Sample Mean",xaxt="n",main="X-bar chart ",
+       ylim = c(min(a$xbar_by_sample)-1,max(a$xbar_by_sample)+1))
+  axis(side=1,at=seq(1,dim(a)[1]/5,5))
+  
+  abline(h=XU,col="red",lwd=2)
+  abline(h=XC,col="green",lwd=2)
+  abline(h=XL,col="red",lwd=2)
+  
+  RL=round(D3*mean(c(tapply(a$X,a$size,Range))),2)
+  RC=round(mean(c(tapply(a$X,a$size,Range))),2)
+  RU= round(D4*mean(c(tapply(a$X,a$size,Range))),2)
+  
+  plot(sample,a$range_by_sample,pch=16,col="blue",type="o",ylab="Sample Range",
+       xlab="Range",main="R chart",xaxt="n",ylim=c(0,RU+2))
+  axis(side=1,at=seq(0,dim(a)[1]/5,5))
+  
+  abline(h=RU,col="red",lwd=2)
+  abline(h=RC,col="green",lwd=2)
+  abline(h=RL,col="red",lwd=2)
+
+}
+#Final limits
+ #R chart
+  print(RU) 
+  print(RC)
+  print(RL) 
+  
+  #Xbar chart
+  
+  print(XU) 
+  print(XC) 
+  print(XL) 
+  
+#################################
+#I-MR chart
+#Phase Ι
+{ 
+bnew=rbind(0,cbind( b[2:dim(b)[1],],b[1:(dim(b)[1]-1),]) ) 
+colnames(bnew)=c("X1","X2")
+b=cbind(b,bnew)
+my.mean=function(x){
+  sum(x)/(length(x)-1) }#συναρτηση για να προσαρμόζεται στα δεδομένα
+for(i in 1:dim(b)[1]){
+  
+ 
+  b$MR[i]=(abs(b$X1[i]-b$X2[i]))
+}
+
+D3=0 ; D4=3.267
+d2=1.128
+
+MR_U=round(D4*my.mean(b$MR),6)
+MR_C=round(my.mean(b$MR),6)
+MR_L=round(D3*my.mean(b$MR),6)
+
+XBAR_U=round(mean(b$X) + 3*MR_C/d2,6)
+XBAR_C= round(mean(b$X),6)
+XBAR_L= round(mean(b$X) - 3*MR_C/d2,6)
+
+if(min(b$X)<XBAR_L){xl1=min(b$X)-(XBAR_C-XBAR_L)*0.5}else(xl1=XBAR_L-(XBAR_C-XBAR_L)*0.5)
+if(max(b$X)>XBAR_U){xl2=max(b$X)+(XBAR_U-XBAR_C)*0.5}else(xl2=XBAR_U+(XBAR_U-XBAR_C)*0.5)
+xl3=0
+if(max(b$MR)>MR_U){xl4=max(b$MR)+(MR_U-MR_C)*0.5}else(xl4=MR_U+(MR_U-MR_C)*0.5)
+
+
+par(mfrow=c(2,1))
+
+plot(1:dim(b)[1],b$X, type="o",col="blue", pch=16,xlab="Observation",main="I chart",
+     ylab="Individual Value",xaxt="n",yaxt="n",ylim=c(xl1,xl2))
+axis(side=1,at=seq(1,dim(b)[1],5))
+axis(side=2,at=seq(round(xl1),round(xl2),0.1))
+
+abline(h=XBAR_U,col="red",lwd=2)
+abline(h=XBAR_C,col="green",lwd=2)
+abline(h=XBAR_L,col="red",lwd=2)
+
+points(which(b$X>XBAR_U),
+       b[b$X>XBAR_U,]$X, col="red",pch=16)
+
+points(which(b$X<XBAR_L),
+       b[b$X<XBAR_L,]$X, col="red",pch=16)
+
+plot(2:dim(b)[1],b[2:length(b$MR),]$MR,col="blue",type="o",pch=16,xlab ="Observation",
+     ylab="Moving Range",main="MR chart",xaxt="n",ylim=c(xl3,xl4)) 
+axis(side=1,at=seq(1,dim(b)[1],5))
+
+
+
+points(which(b$MR>MR_U),
+       b[b$MR>MR_U,]$MR, col="red",pch=16)
+points(which(b$MR<MR_L),
+       b[b$MR<MR_L,]$MR, col="red",pch=16)
+
+abline(h=MR_U, col="red",lwd=2)
+abline(h=MR_C, col="green",lwd=2)
+abline(h=MR_L, col="red",lwd=2)
+
+}
+
+#Phase ΙΙ
+
+while( (max(b$X)>XBAR_U) | (min(b$X)<XBAR_L) | (max(b$MR)>MR_U) ){
+
+  if( (max(b$MR)-MR_U)>0 ){
+   
+    b=b[!b$MR==max(b$MR),]
+    rownames(b)<-NULL
+  
+  }else if( (max(b$X)-XBAR_L) > 0 & (max(b$X)-XBAR_U) > (XBAR_L-min(b$X)) ){
+    
+    b=b[!b$X==max(b$X),]
+    rownames(b)<-NULL
+    
+  }else if( XBAR_L>min(b$X) ){
+    
+    b=b[!b$X==min(b$X),]
+    rownames(b)<-NULL
+  }
+
+y=rbind(0,cbind(b[2:dim(b)[1],]$X,b[1:(dim(b)[1]-1),]$X))
+b=cbind(b$X,y)
+colnames(b)=c("X","X1","X2")  
+b=as.data.frame(b)  
+
+for(i in 1:(dim(b)[1])){
+    
+    
+    b$MR[i]=abs(b$X1[i]-b$X2[i])
+  } 
+  MR_U=round(D4*my.mean(b$MR),6)
+  MR_C=round(my.mean(b$MR),6)
+  MR_L=round(D3*my.mean(b$MR),6)
+  
+  XBAR_U= round(mean(b$X) + 3*MR_C/d2,6)
+  XBAR_C= round(mean(b$X),6)
+  XBAR_L= round(mean(b$X) - 3*MR_C/d2,6)
+}
+
+{
+if(min(b$X)<XBAR_L){xl1=min(b$X)-(XBAR_C-XBAR_L)*0.5}else(xl1=XBAR_L-(XBAR_C-XBAR_L)*0.5)
+if(max(b$X)>XBAR_U){xl2=max(b$X)+(XBAR_U-XBAR_C)*0.5}else(xl2=XBAR_U+(XBAR_U-XBAR_C)*0.5)
+xl3=0
+if(max(b$MR)>MR_U){xl4=max(b$MR)+(MR_U-MR_C)*0.5}else(xl4=MR_U+(MR_U-MR_C)*0.5)
+
+
+plot((1:dim(b)[1]),b$X, type="o",col="blue", pch=16,xlab="Observation",main="I chart",
+     ylab="Individual Value",xaxt="n",yaxt="n",ylim=c(xl1,xl2))
+axis(side=1,at=seq(1,dim(b)[1],5))
+axis(side=2,at=seq(round(xl1),round(xl2),0.25))
+
+points(which(b$X>XBAR_U),
+       b[b$X>XBAR_U,]$X, col="red",pch=16)
+
+points(which(b$X<XBAR_L),
+       b[b$X<XBAR_L,]$X, col="red",pch=16)
+
+abline(h=XBAR_U,col="red",lwd=2)
+abline(h=XBAR_C,col="green",lwd=2)
+abline(h=XBAR_L,col="red",lwd=2)
+
+
+plot(2:dim(b)[1],b[2:dim(b)[1],]$MR,col="blue",type="o",pch=16,xlab ="Observation",
+     ylab="Moving Range",main="MR chart",xaxt="n",ylim=c(xl3,xl4)) 
+axis(side=1,at=seq(1,dim(b)[1],5))
+
+points(which(b$MR>MR_U),
+       b[b$MR>MR_U,]$MR, col="red",pch=16)
+points(which(b$MR<MR_L),
+       b[b$MR<MR_L,]$MR, col="red",pch=16)
+
+abline(h=MR_U, col="red",lwd=2)
+abline(h=MR_C, col="green",lwd=2)
+abline(h=MR_L, col="red",lwd=2)
+}
+#######################
+#NP & P chart
+{
+n=50
+  #NP chart
+mean_p1=mean(c$`proportion (1)`)
+
+NP_C=n*mean(c$`proportion (1)`)
+NP_L=NP_C - 3*sqrt(n*mean_p1*(1-mean_p1))
+NP_U=NP_C + 3*sqrt(n*mean_p1*(1-mean_p1))
+
+if(NP_L<0){ NP_L=0}
+
+plot(1:dim(c)[1],c$`Non-conforming items`,type="o",col="blue",xlab="Sample",
+     ylab ="Sample Count",main="NP chart",xaxt="n",pch=16)
+axis(side=1,at=seq(1,dim(c)[1],5))
+
+abline(h=NP_U,col="red",lwd=2)
+abline(h=NP_C,col="green",lwd=2)
+abline(h=NP_L,col="red",lwd=2)
+
+points(which(c$`Non-conforming items`>NP_U |c$`Non-conforming items`<NP_L),
+  c[which(c$`Non-conforming items`>NP_U |c$`Non-conforming items`<NP_L),]$`Non-conforming items`,
+  col="red",pch=16)
+}
+    # P chart
+{
+P_C=mean_p1
+P_U=mean_p1 + 3*sqrt(mean_p1*(1-mean_p1)/mean(c$`sample size`))
+P_L=mean_p1 - 3*sqrt(mean_p1*(1-mean_p1)/mean(c$`sample size`))
+
+if(P_L<0){P_L=0}
+
+plot(1:dim(c)[1],c$`proportion (1)`,type="o",col="blue",xlab="Sample",
+     ylab ="Non-conforming items",main="P chart",xaxt="n",pch=16)
+axis(side=1,at=seq(1,dim(c)[1],5))
+
+abline(h=P_U,col="red",lwd=2)
+abline(h=P_C,col="green",lwd=2)
+abline(h=P_L,col="red",lwd=2)
+
+points(which(c$`proportion (1)` >P_U | c$`proportion (1)` <P_L),
+       c[which(c$`proportion (1)`>P_U |c$`proportion (1)`<P_L),]$`proportion (1)`,
+       col="red",pch=16)
+}
+
+#Phase ΙΙ
+{
+while( (max(c$`Non-conforming items`)>NP_U) |(min(c$`Non-conforming items`)<NP_L) ){
+  
+  c=c[!c$`proportion (1)`==max(c$`proportion (1)`),]
+  rownames(c)<-NULL
+  
+  NP_C=n*mean(c$`proportion (1)`)
+  NP_L=NP_C - 3*sqrt(n*mean_p1*(1-mean_p1))
+  NP_U=NP_C + 3*sqrt(n*mean_p1*(1-mean_p1))
+  
+  if(NP_L<0) {NP_L=0}
+  
+}
+#NP
+plot(1:dim(c)[1],c$`Non-conforming items`,type="o",col="blue",xlab="Sample",
+     ylab ="Sample Count",main="NP chart",xaxt="n",pch=16,ylim = c(NP_L,NP_U))
+axis(side=1,at=seq(1,dim(c)[1],5))
+
+abline(h=NP_U,col="red",lwd=2)
+abline(h=NP_C,col="green",lwd=2)
+abline(h=NP_L,col="red",lwd=2)
+
+points(which(c$`Non-conforming items`>NP_U |c$`Non-conforming items`<NP_L),
+       c[which(c$`Non-conforming items`>NP_U |c$`Non-conforming items`<NP_L),]$`Non-conforming items`,
+       col="red",pch=16)
+}
+
+##########################################
+#U chart
+
+#Phase I
+{
+for (i in 1:dim(e)[1]) {
+  e$`proportion`[i]=round(e$`Total number of imperfections`[i]/e$`Number of Rolls produced`[i],3)
+}
+mean_n=mean(e$`Number of Rolls produced`)#μεση ημερήσια παραγωγή
+U_C=mean(e$proportion)
+U_U=U_C + 3*sqrt(U_C/mean_n)
+U_L=U_C - 3*sqrt(U_C/mean_n)
+    #σταθερές για το πλάτος του διαγράμματος
+if(max(e$proportion)>U_U){lim1=max(e$proportion)+(U_U-U_C)*0.5
+}else{lim1=U_U+(U_U-U_C)*0.5}
+if(min(e$proportion)<U_L){lim2=min(e$proportion)-(U_C-U_L)*0.5
+}else{lim2=U_L-(U_C-U_L)*0.5}
+
+plot(e$Day,e$proportion,xlab="Day", type="o",
+     main="U chart of Total number of imperfections",pch=16,col="blue",
+     ylab="Sample Count Per Unit",xaxt="n",ylim =c(0,1.5))
+axis(side=1,at=seq(1,dim(e)[1],5))
+
+abline(h=c(U_L,U_U),col="red",lwd=2)
+abline(h=U_C,col="green",lwd=2)
+ #τιμές εκτός ορίων
+points(which(e$proportion>U_U | e$proportion<U_L),
+       e[e$proportion>U_U |e$proportion<U_L,]$proportion,pch=16,
+       col="red")
+}
+#Phase ΙΙ
+{
+while(max(e$proportion)>U_U | min(e$proportion)<U_L){
+  if( max(e$proportion)-U_U > U_L- min(e$proportion)){
+    e=e[!e$proportion==max(e$proportion),]
+  }else if(  max(e$proportion)-U_U > U_L- min(e$proportion)){
+    e=e[!e$proportion==min(e$proportion),]
+  }
+  rownames(e)<-NULL
+}
+
+plot(e$Day,e$proportion,xlab="Day", type="o",
+     main="U chart of Total number of imperfections",pch=16,col="blue",
+     ylab="Sample Count Per Unit",xaxt="n",ylim =c(U_L,U_U))
+axis(side=1,at=seq(1,dim(e)[1],5))
+
+abline(h=c(U_L,U_U),col="red",lwd=2)
+abline(h=U_C,col="green",lwd=2)
+}
+
+
+
+########################
+#U chart for constant production
+{
+n=25
+for (i in 1:dim(e)[1]) {
+  e$`proportion for 25 units`[i]=round(e$`Total number of imperfections`[i]/n,3)
+}
+
+U_Cnew=mean(e$proportion)
+U_Unew=U_Cnew + 3*sqrt(U_Cnew/n)
+U_Lnew=U_Cnew - 3*sqrt(U_Cnew/n)
+
+plot(e$Day,e$`proportion for 25 units`,xlab="Day", type="o",
+     main="U chart of Total number of imperfections",pch=16,col="blue",
+     ylab="Sample Count Per Unit",xaxt="n",ylim =c(U_L,U_U))
+axis(side=1,at=seq(1,dim(e)[1],5))
+
+#############################
+#I-MR chart only phase II
+
+# check the normality
+library(hrbrthemes)
+library(tidyverse)
+
+ggplot(data=f,aes(x=W))+ #ιστογραμμα
+  geom_histogram(bins=15,fill="#69b3a2",col="#ececef",alpha=0.9,)+
+  ggtitle("Bin size = 15") +
+  theme_ipsum()+
+theme(plot.title = element_text(size=15))  
+
+library(ggplot2)
+library(qqplotr)
+
+ggplot(data=f,aes(sample = W)) + #qq plot 
+  stat_qq_band( bandType = "pointwise",fill = "#8DA0CB", alpha = 0.6,distribution="norm") +
+  stat_qq_line(colour = "#8DA0CB") +
+  stat_qq_point()+
+  xlab("Theoretical Quantiles")+
+  ylab( "Sample Quantiles")
+
+shapiro.test(f$W)
+ks.test(f$W,"pnorm",mean=mean(f$W),sd=sd(f$W))
+
+
+{
+m=8
+s=1
+I_U=m+3*s
+I_C=m
+I_L=m-3*s
+
+if(max(f$W)>I_U){y1=max(f$W)}else{y2=I_U} #πλατος διαγραμματος  
+if(min(f$W)<I_L){y2=min(f$W)}else{y1=I_L}  
+
+fnew=rbind(0,cbind(f$W[2:dim(f)[1]],f$W[1:(dim(f)[1]-1)]))
+colnames(fnew)<-c("X1","X2")
+f=cbind(f,fnew)
+
+for(i in 1:dim(f)[1]){
+  f$MR[i]=abs(f$X1[i]-f$X2[i])
+}
+
+D3=0;D4=3.267;d2=1.128
+MR_C=MRbar
+MR_L=D3*MR_C
+MR_U=D4*MR_C
+MRbar=d2*s
+
+if(max(f$MR)>MR_U){y4=max(f$MR)}else{y4=MR_U}  
+if(min(f$MR)<MR_L){y3=min(f$MR)}else{y3=MR_L}  
+
+par(mfrow=c(2,1))
+
+#I chart
+
+plot(f$W,type="o",pch=16,col="blue",xlab="Sample",ylab = "Individual Value",
+     main="I chart",xaxt="n",ylim=c(y1,y2))
+axis(side=1,at=seq(1,dim(f)[1],5))
+
+abline(h=c(I_U,I_L),col="red",lwd=2)  
+abline(h=I_C, col="green",lwd=2)  
+
+points(which(f$W>I_U |f$W<I_L),f[f$W<I_L | f$W<I_L,]$W,col="red",pch=16)
+
+#MR chart
+
+plot(2:dim(f)[1], f[2:dim(f)[1],]$MR,type="o",pch=16,col="blue",xlab="Sample",ylab = "Moving Range",
+     main="MR chart",xaxt="n",ylim=c(y3,y4))
+axis(side=1,at=seq(1,dim(f)[1],5))
+abline(h=c(MR_U,MR_L),col="red",lwd=2)  
+abline(h=MR_C, col="green",lwd=2)  
+
+points(which(f$MR>MR_U ),f[f$MR>MR_U,]$MR,col="red",pch=16)
+
+}
+
